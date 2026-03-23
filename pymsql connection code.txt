@@ -1,0 +1,197 @@
+import pymysql as py
+import streamlit as st
+
+
+def create_connection():
+    try:
+        print("Trying to connect to MySQL...")
+        connection = py.connect(
+            host='localhost',
+            user='root',
+            password='root',
+            database='edureka',
+            port=3306  # Changed string "3306" to integer 3306
+        )
+        print("Connected to MySQL ✅")
+        return connection
+    except py.Error as e: # Use py.Error for PyMySQL
+        print(f"CONNECTION ERROR: {e}")
+        return None
+
+def initialize_database():
+    connection = create_connection()
+
+    if connection:
+        try:
+            cursor = connection.cursor()
+            # cursor.execute("""
+            #     CREATE TABLE IF NOT EXISTS test12553 (
+            #         id INT AUTO_INCREMENT PRIMARY KEY,
+            #         name VARCHAR(255),
+            #         age INT
+            #     )
+            # """)
+            print("success")
+            connection.commit()
+            print("Table created successfully ✅")
+
+        except py.Error as e:
+            print(f"Execution Error: {e}")
+
+        finally:
+            # PyMySQL connections don't use .is_connected()
+            cursor.close()
+            connection.close()
+            print("MySQL connection closed")
+
+initialize_database()
+
+
+st.title("CRUD Operations With MySql")
+st.sidebar.selectbox("Select an Operation",("Create","Read","Update","Delete"))
+
+
+###############################################################################################
+
+
+
+import time
+import pymysql as py
+import streamlit as st
+
+mydb = py.connect(
+            host='localhost',
+            user='root',
+            password='root',
+            database='crud',
+            port=3306  # Changed string "3306" to integer 3306
+        )
+print("Connected to MySQL ✅")
+mycursor=mydb.cursor()
+print("Connection Esablished")
+
+st.title("Seating Management Signup")
+option=st.sidebar.selectbox("Select an Operation",("Create","Read records"),
+                            key="my_sidebar_key")
+
+# if 'my_sidebar_key_value' not in st.session_state:
+#     st.session_state['my_sidebar_key'] = ""
+
+def CreateUser():
+    sql="insert into users(name,email) values(%s,%s)"
+    val=(name,email)
+    mycursor.execute(sql,val)
+    mydb.commit()
+    st.session_state.createname=""
+    st.session_state.createemail=""
+    st.toast('New User created successfully', icon='✅')
+
+# def update_sidebar_selection(res):
+#     st.write(res,"ran till and after function")
+#     st.session_state.my_sidebar_key = "Update"
+#     # st.write(res)
+#     mycursor.execute("select * from users")
+#     result=mycursor.fetchall()
+#     # for rows in result:
+
+         
+
+    # st.session_state['my_sidebar_key'] = 'Update'
+# st.sidebar.selectbox(
+#     "Choose an option",
+#     options,
+#     key="my_sidebar_key"
+# )
+    
+
+if option =="Create":
+    st.subheader("Create a new user")
+    name=st.text_input("Enter a name:",key="createname")
+    email=st.text_input("Enter email",key="createemail")
+    st.button("Create", on_click=CreateUser)
+
+        
+elif option=="Read records":
+    st.subheader("Read records")
+    mycursor.execute("select * from users")
+    result=mycursor.fetchall()
+    # st.toast("Record Retrieved Successfully", icon='✅')
+    
+    for row in result:
+        col1, col2= st.columns([1,1])
+        with col1:
+            st.write(row)
+        with col2:
+            col1,col2 = st.columns([1,4])
+            with col1:
+                # if st.button("Edit",key=row[0]+10000,on_click=lambda:update_sidebar_selection(row[0])):
+                @st.dialog("Edit")
+                def feedback_modal(id,namee,emaill):
+                    name = st.text_input("Enter new name:",value=namee)
+                    email = st.text_input("Enter new email:",value=emaill)
+                    if st.button("Update"):
+                        # st.write(newname,newemail,id)
+                        sql="UPDATE users SET name=%s, email=%s WHERE id=%s"
+                        val=(name,email,id)
+                        mycursor.execute(sql,val)
+                        mydb.commit()
+                        st.toast("Record Retrieved Successfully", icon='✅')
+                        time.sleep(.7)
+                        # st.session_state.vote = {"item": item, "reason": reason
+                        st.rerun()  # Rerunning the app closes the dialog
+
+                if st.button("Edit",key=row[0]+10000):
+                    id=row[0]
+                    name=row[1]
+                    email=row[2]
+                    feedback_modal(id,name,email)
+
+                # if st.button("Edit",key=row[0]+10000):
+                #     id=row[0]
+                #     st.write(id)
+
+                # if st.button("Edit",key=row[0]+10000):
+                    # id=(row[0])
+                    # st.write(id)
+                    # update_sidebar_selection(id)
+                    # st.rerun()
+                # if st.button("Edit",key=row[0]+10000):
+                #     lambda:update_sidebar_selection(row[0])
+
+                    
+            with col2:
+                if st.button("❌",key=row[0]):
+                    id=(row[0])
+                    sql="delete from users where id=%s"
+                    val=(id)
+                    mycursor.execute(sql,val)
+                    mydb.commit()
+                    st.toast("Record deleted successfully", icon='❌')
+                    time.sleep(.7)
+                    st.rerun()
+            
+# elif option=="Update":
+#     st.subheader("Update a record")
+#     id=st.number_input("Enter ID")
+#     name=st.text_input("Enter new name")
+#     email=st.text_input("Enter new email")
+#     if st.button("Update"):
+#         # st.write(name,email,id)
+#         sql="update users set name=%s, email=%s where id=%s"
+#         val=(name,email,id)
+#         mycursor.execute(sql,val)
+#         mydb.commit()
+#         st.success("Record Updated Successfully")
+
+# elif option=="Delete":
+#     st.subheader("Delete a record")
+#     id=st.number_input("Enter ID")
+#     if st.button("Delete record"):
+#         sql="delete from users where id=%s"
+#         val=(id)
+#         mycursor.execute(sql,val)
+#         mydb.commit()
+#         st.error("Record deleted successfully.")
+
+
+

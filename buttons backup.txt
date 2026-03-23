@@ -1,0 +1,69 @@
+backup- buttons,,
+
+rows = ["A", "B", "C", "D"]
+            cols = 6
+
+
+for r in rows:
+                    cols_ui = st.columns(cols) 
+                    for c in range(1, cols + 1):
+                        seat_id = f"{r}{c}"
+                        is_booked = seat_id in booked_seats
+                        if 'show_button' not in st.session_state:
+                                st.session_state['show_button'] = True
+                        @st.dialog("Confirm Selection")
+                        def show_confirmation(item_name,username):
+                            st.write(f"Are you sure to book seat {item_name} for {username} ?")
+                            
+                            st.button(".")
+                            min_date = datetime.now()
+                            max_date_limit = min_date + timedelta(days=60)
+
+                            st.write("### Choose time range:")
+
+                            # 2. Start Date Input
+                            # We use min_date as the default value to match the min_value
+                            start = st.datetime_input(
+                                "Start", 
+                                value=min_date,
+                                min_value=min_date,
+                                max_value=max_date_limit,
+                                step=60
+                            )
+
+                            # 3. End Date Input 
+                            # IMPORTANT: The min_value for 'End' is now the 'start' variable itself
+                            # This prevents the user from picking an end date before the start date
+                            end = st.datetime_input(
+                                "End", 
+                                value=start + timedelta(hours=1), # Default to 1 hour after start
+                                min_value=start,
+                                max_value=max_date_limit,
+                                step=60
+                            )
+
+                            # 4. Formatting for display or database
+                            format_start = start.strftime("%Y-%m-%d %H:%M:%S")
+                            format_end = end.strftime("%Y-%m-%d %H:%M:%S")
+
+                            # Display the selection
+                            st.info(f"**Selected Range:** {format_start} **to** {format_end}")
+                            if st.button("Confirm"): 
+                                userid=st.session_state.user["id"]
+                                username=st.session_state.user['username']
+                                seat=st.session_state.selected
+                                book_seat(userid,username,seat,format_start,format_end)
+                                # st.write(userid,username,seat,start_time,end_time)
+                                # st.rerun()
+                        
+                        if cols_ui[c-1].button(seat_id, key=seat_id, disabled=is_booked,
+                                            #    type="primary", 
+                                            # type="secondary" if st.session_state.is_primary else "primary",
+                                            type="primary",
+                                            # on_click=toggle_type,
+                                            use_container_width=True,
+                                            args=(seat_id,)):
+                            # book_seat(seat_id,userid)
+                            st.session_state.selected=seat_id
+                            # st.write(seat_id)
+                            show_confirmation(st.session_state.selected,st.session_state.user['username'])
